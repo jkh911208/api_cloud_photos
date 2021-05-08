@@ -1,12 +1,34 @@
-import uvicorn
 from fastapi import FastAPI
 
-from models.User import User
+import config
+from db import db
 
-app = FastAPI() 
-@app.post("/", response_model=User) 
-def create_user(user: User): 
-    return user
+app = None
+app = FastAPI(title="Save your photos api",
+                description="API Docs for save your photos",
+                version=0.1, debug=True)
+if app is None:
+    raise RuntimeError("Failed to initiate FastAPI")
+
+@app.on_event("startup")
+async def startup():
+    await db.connect()
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    await db.disconnect()
+
+from models.User import *
+
+
+@app.post("/")
+async def read_root(data: UserInput):
+    from schema.Users import Users
+    user_id = await Users.create(**data.dict())
+    return {"id": user_id}
 
 if __name__ == "__main__": 
-    uvicorn.run(app, host="0.0.0.0", port=5000)
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=5000,
+                log_level="debug", reload=True)
