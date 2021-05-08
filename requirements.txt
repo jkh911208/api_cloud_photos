@@ -4,3 +4,4 @@ psycopg2_binary==2.8.6
 uvicorn==0.13.4
 databases[postgres]==0.4.3
 asyncpg==0.22.0
+orjson==3.5.2
