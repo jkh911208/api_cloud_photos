@@ -1,0 +1,6 @@
+fastapi==0.64.0
+alembic==1.6.2
+psycopg2_binary==2.8.6
+uvicorn==0.13.4
+databases[postgres]==0.4.3
+asyncpg==0.22.0
