@@ -24,8 +24,12 @@ from models.User import *
 
 @app.post("/")
 async def read_root(data: UserInput):
+    import uuid
+
     from schema.Users import Users
-    user_id = await Users.create(**data.dict())
+    data = data.dict()
+    data["id"] = uuid.uuid4()
+    user_id = await Users.create(**data)
     return {"id": user_id}
 
 if __name__ == "__main__": 

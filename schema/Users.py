@@ -7,10 +7,10 @@ from sqlalchemy.sql import func
 users = sqlalchemy.Table(
     "users",
     metadata,
-    sqlalchemy.Column("id", sqlalchemy.INTEGER, primary_key=True, index=True, unique=True),
-    sqlalchemy.Column("created", sqlalchemy.DateTime, default=func.now()),
-    sqlalchemy.Column("username", sqlalchemy.String),
-    sqlalchemy.Column("password", sqlalchemy.String)
+    sqlalchemy.Column("id", UUID(as_uuid=True), primary_key=True, index=True, unique=True),
+    sqlalchemy.Column("created", sqlalchemy.DateTime, nullable=False, default=func.now()),
+    sqlalchemy.Column("username", sqlalchemy.String, nullable=False, unique=True),
+    sqlalchemy.Column("password", sqlalchemy.String, nullable=False)
 )
 
 class Users:
