@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 import config
+from api.v1.user import user_router
 from db import db
 
 app = None
@@ -19,18 +20,7 @@ async def startup():
 async def shutdown():
     await db.disconnect()
 
-from models.User import *
-
-
-@app.post("/")
-async def read_root(data: UserInput):
-    import uuid
-
-    from schema.Users import Users
-    data = data.dict()
-    data["id"] = uuid.uuid4()
-    user_id = await Users.create(**data)
-    return {"id": user_id}
+app.include_router(user_router, prefix="/api/v1/user")
 
 if __name__ == "__main__": 
     import uvicorn

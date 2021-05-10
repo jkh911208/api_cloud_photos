@@ -1,3 +1,4 @@
 import os
 
-PRODUCTION = bool(os.getenv("PRODUCTION", default=False))
+PRODUCTION = os.getenv("PRODUCTION", default=False)
+SECRET = os.getenv("SECRET", default=None)
