@@ -7,6 +7,7 @@ user_router = APIRouter()
 user_controller = User()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/user/login")
 
+
 class SignUp(BaseModel):
     username: StrictStr
     password: StrictStr
@@ -14,9 +15,11 @@ class SignUp(BaseModel):
     class Config:
         orm_mode = True
 
+
 class Token(BaseModel):
     access_token: str
     token_type: str
+
 
 @user_router.post("/signup", tags=["User"], summary="signup", response_model=Token, status_code=201)
 async def signup(data: SignUp, response: Response):
