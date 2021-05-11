@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 import config
+from api.v1.photo import photo_router
 from api.v1.user import user_router
 from db import db
 
@@ -21,6 +22,7 @@ async def shutdown():
     await db.disconnect()
 
 app.include_router(user_router, prefix="/api/v1/user")
+app.include_router(photo_router, prefix="/api/v1/photo")
 
 if __name__ == "__main__": 
     import uvicorn
