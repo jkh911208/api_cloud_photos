@@ -1,5 +1,4 @@
 import io
-import shutil
 from uuid import uuid4
 
 from PIL import ExifTags, Image
@@ -18,7 +17,7 @@ class Photo(object):
             raise ValueError(f"Not supported type : {content_type}")
 
     async def __process_image(self, file, owner_id):
-        supported_format = {"jpeg", "jpg", "png"}
+        supported_format = {"jpeg", "jpg"}
         file_format = file.content_type.split("/")[1]
         if file_format.lower() not in supported_format:
             raise ValueError(f"Image format of {file_format} is not supported")
@@ -27,15 +26,12 @@ class Photo(object):
         # read image
         file_bytes = await file.read()
         img = Image.open(io.BytesIO(file_bytes))
-        img_exif = img.getexif()
+        img_exif = img._getexif()
 
         exif = {}
         for key, val in img_exif.items():
             if key in ExifTags.TAGS:
                 exif[ExifTags.TAGS[key]] = val
-
-        print(exif)
-
         width, height = img.size
         id = str(uuid4())
         payload = {
@@ -51,24 +47,19 @@ class Photo(object):
             "owner" : owner_id,
             "status": 1
         }
-        from time import time
-        init = time()
+
+        if "GPSInfo" in exif:
+            payload["latitude"] = float((exif["GPSInfo"][2][0] + exif["GPSInfo"][2][1] / 60 + exif["GPSInfo"][2][2] / 3600) * 1 if exif["GPSInfo"][1] == "N" else -1)
+            payload["longitude"] = float((exif["GPSInfo"][4][0] + exif["GPSInfo"][4][1] / 60 + exif["GPSInfo"][4][2] / 3600) * (1 if exif["GPSInfo"][3] == "E" else -1))
+
+        print(payload)
         with open(f"{id}.{file_format}",'wb+') as f:
             f.write(file_bytes)
             f.close()
-        print("save original", time()-init)
-        init = time()
         img.thumbnail((2560,2560), Image.LANCZOS)
-        print("resize", time()-init)
-        init = time()
         img.save(f"{id}-resize.{file_format}", file_format)
-        print("save resize", time()-init)
-        init = time()
-        img.thumbnail((256,256), Image.LANCZOS)
-        print("thumbnail", time()-init)
-        init = time()
+        img.thumbnail((512,512), Image.LANCZOS)
         img.save(f"{id}-thumbnail.{file_format}", file_format)
-        print("save thumbnail", time()-init)
 
         return payload
 
