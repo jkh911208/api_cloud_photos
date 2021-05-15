@@ -5,6 +5,7 @@ from uuid import uuid4
 
 import config
 import pytz
+from fastapi.responses import StreamingResponse
 from PIL import ExifTags, Image
 from schema.Photos import Photos
 from timezonefinder import TimezoneFinder
@@ -13,6 +14,18 @@ from timezonefinder import TimezoneFinder
 class Photo(object):
     def __init__(self):
         pass
+
+    async def get_resized_image(self, id, owner_id):
+        img = await Photos.get_by_id(id)
+        print(img)
+        if owner_id != img["owner"]:
+            raise ValueError("Not authenticated")
+
+        complete_path = f"{config.STORE_PATH}/{owner_id}/"
+        filename_split = img["new_filename"].split(".")
+        resize_filename = f"{filename_split[0]}-resize.{filename_split[1]}"
+        img = open(f"{complete_path}{resize_filename}", mode="rb")
+        return StreamingResponse(img, media_type=f"image/{filename_split[1]}")
 
     async def upload_media(self, file, owner_id):
         content_type = file.content_type
@@ -90,6 +103,7 @@ class Photo(object):
         img.thumbnail((512, 512), Image.LANCZOS)
         img.save(f"{complete_path}{id}-thumbnail.{file_format}", file_format)
         print(payload)
+        await file.close()
         await Photos.insert(**payload)
         return payload
 

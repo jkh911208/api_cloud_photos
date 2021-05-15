@@ -29,14 +29,14 @@ class Photos:
     @classmethod
     async def get_by_id(cls, id):
         query = photos.select().where(photos.c.id == id)
-        user = await db.fetch_one(query)
-        return user
+        photo = await db.fetch_one(query)
+        return dict(photo)
 
     @classmethod
     async def get_by_owner(cls, owner: str, offset: int = 0, limit: int = 100):
         query = photos.select().where(photos.c.owner == owner).limit(limit).offset(offset)
-        user = await db.fetch_one(query)
-        return user
+        photos = await db.fetch_one(query)
+        return dict(photos)
 
     @classmethod
     async def insert(cls, **data):

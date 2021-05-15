@@ -14,3 +14,9 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/user/login")
 async def upload_media(file: UploadFile = File(...), token: str = Depends(oauth2_scheme)):
     token = jwt.decode(token, config.SECRET)
     return await photo_controller.upload_media(file, token["id"])
+
+@photo_router.get("/{id}", tags=["Photo"], summary="get single photo", status_code=200)
+async def get_resized_image(id: str, token: str = Depends(oauth2_scheme)):
+    token = jwt.decode(token, config.SECRET)
+    return await photo_controller.get_resized_image(id, token["id"])
+
