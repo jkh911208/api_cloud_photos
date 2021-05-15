@@ -10,12 +10,14 @@ photos = sqlalchemy.Table(
                       nullable=False, default=func.now()),
     sqlalchemy.Column("original_filename", sqlalchemy.String, nullable=False),
     sqlalchemy.Column("original_datetime", sqlalchemy.DateTime,
-                      nullable=False, default=func.now()),
+                      nullable=False, default=func.now(), index=True),
     sqlalchemy.Column("original_make", sqlalchemy.String, nullable=True),
     sqlalchemy.Column("original_model", sqlalchemy.String, nullable=True),
     sqlalchemy.Column("original_width", sqlalchemy.Integer, nullable=False),
     sqlalchemy.Column("original_height", sqlalchemy.Integer, nullable=False),
     sqlalchemy.Column("new_filename", sqlalchemy.String, nullable=False),
+    sqlalchemy.Column("thumbnail", sqlalchemy.String, nullable=False),
+    sqlalchemy.Column("resize", sqlalchemy.String, nullable=False),
     sqlalchemy.Column("latitude", sqlalchemy.Float, nullable=True),
     sqlalchemy.Column("longitude", sqlalchemy.Float, nullable=True),
     sqlalchemy.Column("owner", sqlalchemy.String(36),
@@ -34,9 +36,9 @@ class Photos:
 
     @classmethod
     async def get_by_owner(cls, owner: str, offset: int = 0, limit: int = 100):
-        query = photos.select().where(photos.c.owner == owner).limit(limit).offset(offset)
-        photos = await db.fetch_one(query)
-        return dict(photos)
+        query = photos.select().with_only_columns([photos.c.id, photos.c.original_datetime, photos.c.thumbnail, photos.c.resize]).where(photos.c.owner == owner).limit(limit).offset(offset).order_by(photos.c.original_datetime.desc())
+        result = await db.fetch_all(query)
+        return {"result": result}
 
     @classmethod
     async def insert(cls, **data):
