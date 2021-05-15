@@ -4,12 +4,16 @@ from sqlalchemy.sql import func
 users = sqlalchemy.Table(
     "users",
     metadata,
-    sqlalchemy.Column("id", sqlalchemy.String(36), primary_key=True, index=True, unique=True),
-    sqlalchemy.Column("created", sqlalchemy.DateTime, nullable=False, default=func.now()),
-    sqlalchemy.Column("username", sqlalchemy.String, nullable=False, unique=True, index=True),
+    sqlalchemy.Column("id", sqlalchemy.String(
+        36), primary_key=True, index=True, unique=True),
+    sqlalchemy.Column("created", sqlalchemy.DateTime,
+                      nullable=False, default=func.now()),
+    sqlalchemy.Column("username", sqlalchemy.String,
+                      nullable=False, unique=True, index=True),
     sqlalchemy.Column("password", sqlalchemy.String(128), nullable=False),
     sqlalchemy.Column("status", sqlalchemy.SmallInteger, nullable=False)
 )
+
 
 class Users:
     @classmethod

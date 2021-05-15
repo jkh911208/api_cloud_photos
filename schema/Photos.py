@@ -9,7 +9,8 @@ photos = sqlalchemy.Table(
     sqlalchemy.Column("created", sqlalchemy.DateTime,
                       nullable=False, default=func.now()),
     sqlalchemy.Column("original_filename", sqlalchemy.String, nullable=False),
-    sqlalchemy.Column("original_datetime", sqlalchemy.DateTime, nullable=False, default=func.now()),
+    sqlalchemy.Column("original_datetime", sqlalchemy.DateTime,
+                      nullable=False, default=func.now()),
     sqlalchemy.Column("original_make", sqlalchemy.String, nullable=True),
     sqlalchemy.Column("original_model", sqlalchemy.String, nullable=True),
     sqlalchemy.Column("original_width", sqlalchemy.Integer, nullable=False),
@@ -17,7 +18,8 @@ photos = sqlalchemy.Table(
     sqlalchemy.Column("new_filename", sqlalchemy.String, nullable=False),
     sqlalchemy.Column("latitude", sqlalchemy.Float, nullable=True),
     sqlalchemy.Column("longitude", sqlalchemy.Float, nullable=True),
-    sqlalchemy.Column("owner", sqlalchemy.String(36), index=True, nullable=False),
+    sqlalchemy.Column("owner", sqlalchemy.String(36),
+                      index=True, nullable=False),
     sqlalchemy.Column("status", sqlalchemy.SmallInteger, nullable=False),
     sqlalchemy.ForeignKeyConstraint(["owner"], ["users.id"])
 )
