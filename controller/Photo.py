@@ -39,6 +39,7 @@ class Photo(object):
         if file_format.lower() not in supported_format:
             raise ValueError(f"Image format of {file_format} is not supported")
 
+        # generate uuid4 id
         id = str(uuid4())
 
         # read image
@@ -46,23 +47,20 @@ class Photo(object):
         img = Image.open(io.BytesIO(file_bytes))
         await file.close()
 
-        # parse exif and size
-        img_exif = img._getexif()
-        exif = {}
-        width, height = img.size
-        if img_exif is not None:
-            for key, val in img_exif.items():
-                if key in ExifTags.TAGS:
-                    exif[ExifTags.TAGS[key]] = val
-            if "Orientation" in exif:
-                if exif["Orientation"] > 4:
-                    height, width = img.size
+        # get exif data
+        exif = await self.__parse_exif(img)
+
+        # get image size
+        width, height = await self.__get_img_size(img, exif)
+
+        # parse gps info from exif
+        latitude, longitude, original_datetime = await self.__parse_exif_gps_info(exif)
 
         # build db payload
         payload = {
             "id": id,
             "original_filename": file.filename,
-            "original_datetime": exif["DateTime"] if "DateTime" in exif else None,
+            "original_datetime": original_datetime,
             "original_make": exif["Make"] if "Make" in exif else None,
             "original_model": exif["Model"] if "Model" in exif else None,
             "original_width": width,
@@ -71,34 +69,11 @@ class Photo(object):
             "thumbnail": f"{id}-thumbnail.{file_format}",
             "resize": f"{id}-resize.{file_format}",
             "owner": owner_id,
-            "status": 1
+            "status": 1,
+            "latitude": latitude,
+            "longitude": longitude
         }
 
-        # parse GPS info into coordinate
-        if "GPSInfo" in exif:
-            payload["latitude"] = float((exif["GPSInfo"][2][0] + exif["GPSInfo"][2][1] /
-                                        60 + exif["GPSInfo"][2][2] / 3600) * 1 if exif["GPSInfo"][1] == "N" else -1)
-            payload["longitude"] = float((exif["GPSInfo"][4][0] + exif["GPSInfo"][4][1] /
-                                         60 + exif["GPSInfo"][4][2] / 3600) * (1 if exif["GPSInfo"][3] == "E" else -1))
-
-            # change datetime into UTC
-            if payload["original_datetime"] is not None:
-                tf = TimezoneFinder()
-                timezone_str = tf.certain_timezone_at(
-                    lat=payload["latitude"], lng=payload["longitude"])
-                local = pytz.timezone(timezone_str)
-                naive = datetime.strptime(
-                    payload["original_datetime"], "%Y:%m:%d %H:%M:%S")
-                local_dt = local.localize(naive, is_dst=None)
-                utc_dt = local_dt.astimezone(pytz.utc)
-                payload["original_datetime"] = datetime.strptime(
-                    utc_dt.strftime("%Y:%m:%d %H:%M:%S"), "%Y:%m:%d %H:%M:%S")
-        else:
-            if payload["original_datetime"] is None:
-                payload["original_datetime"] = datetime.utcnow()
-            else:
-                payload["original_datetime"] = datetime.strptime(
-                    payload["original_datetime"], "%Y:%m:%d %H:%M:%S")
         # write payload to DB
         await Photos.insert(**payload)
 
@@ -121,5 +96,58 @@ class Photo(object):
 
         return payload
 
+    @staticmethod
+    async def __parse_exif_gps_info(exif):
+        local_time = datetime.now()
+        if "DateTime" in exif:
+            local_time = datetime.strptime(
+                    exif["DateTime"], "%Y:%m:%d %H:%M:%S")
+
+        # calculate gps coordinate
+        latitude, longitude = None, None
+        if "GPSInfo" in exif:
+            if 1 in exif["GPSInfo"] and 2 in exif["GPSInfo"] and 3 in exif["GPSInfo"] and 4 in exif["GPSInfo"]:
+                latitude = float((exif["GPSInfo"][2][0] + exif["GPSInfo"][2][1] /
+                                            60 + exif["GPSInfo"][2][2] / 3600) * 1 if exif["GPSInfo"][1] == "N" else -1)
+                longitude = float((exif["GPSInfo"][4][0] + exif["GPSInfo"][4][1] /
+                                         60 + exif["GPSInfo"][4][2] / 3600) * (1 if exif["GPSInfo"][3] == "E" else -1))
+        
+        # calculate utc time based on gps info
+        if latitude is not None:
+            tf = TimezoneFinder()
+            timezone_str = tf.certain_timezone_at(
+                lat=latitude, lng=longitude)
+            local = pytz.timezone(timezone_str)
+            naive = local_time
+            local_dt = local.localize(naive, is_dst=None)
+            utc_dt = local_dt.astimezone(pytz.utc)
+            local_time = datetime.strptime(
+                utc_dt.strftime("%Y:%m:%d %H:%M:%S"), "%Y:%m:%d %H:%M:%S")
+        
+        return latitude, longitude, local_time
+
+    @staticmethod
+    async def __get_img_size(img, exif):
+        width, height = img.size
+        if exif is None:
+            width, height
+        else:
+            if "Orientation" in exif:
+                if exif["Orientation"] > 4:
+                    return height, width
+            return width, height
+
+    @staticmethod
+    async def __parse_exif(img):
+        img_exif = img._getexif()
+        exif = {}
+        if img_exif is not None:
+            for key, val in img_exif.items():
+                if key in ExifTags.TAGS:
+                    exif[ExifTags.TAGS[key]] = val
+            return exif
+        return None
+
+        
     async def __process_video(self, file, owner_id):
         pass
