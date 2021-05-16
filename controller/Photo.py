@@ -1,3 +1,4 @@
+import hashlib
 import io
 import os
 from datetime import datetime
@@ -56,6 +57,11 @@ class Photo(object):
         # parse gps info from exif
         latitude, longitude, original_datetime = await self.__parse_exif_gps_info(exif)
 
+        # check if your have same file
+        md5 = hashlib.md5(file_bytes).hexdigest()
+        if await self.__check_redundant(owner_id, md5):
+            raise ValueError("Same file exist")
+
         # build db payload
         payload = {
             "id": id,
@@ -71,7 +77,8 @@ class Photo(object):
             "owner": owner_id,
             "status": 1,
             "latitude": latitude,
-            "longitude": longitude
+            "longitude": longitude,
+            "md5": md5
         }
 
         # write payload to DB
@@ -95,6 +102,10 @@ class Photo(object):
                  file_format, exif=img.info['exif'])
 
         return payload
+
+    @staticmethod
+    async def __check_redundant(owner_id, md5):
+        return await Photos.check_redundant_file(owner_id, md5)
 
     @staticmethod
     async def __parse_exif_gps_info(exif):

@@ -18,6 +18,7 @@ photos = sqlalchemy.Table(
     sqlalchemy.Column("new_filename", sqlalchemy.String, nullable=False),
     sqlalchemy.Column("thumbnail", sqlalchemy.String, nullable=False),
     sqlalchemy.Column("resize", sqlalchemy.String, nullable=False),
+    sqlalchemy.Column("md5", sqlalchemy.String, nullable=False, unique=False),
     sqlalchemy.Column("latitude", sqlalchemy.Float, nullable=True),
     sqlalchemy.Column("longitude", sqlalchemy.Float, nullable=True),
     sqlalchemy.Column("owner", sqlalchemy.String(36),
@@ -36,9 +37,16 @@ class Photos:
 
     @classmethod
     async def get_by_owner(cls, owner: str, offset: int = 0, limit: int = 100):
-        query = photos.select().with_only_columns([photos.c.id, photos.c.original_datetime, photos.c.thumbnail, photos.c.resize]).where(photos.c.owner == owner).limit(limit).offset(offset).order_by(photos.c.original_datetime.desc())
+        query = photos.select().with_only_columns([photos.c.id, photos.c.original_datetime, photos.c.thumbnail, photos.c.resize]).where(
+            photos.c.owner == owner).limit(limit).offset(offset).order_by(photos.c.original_datetime.desc())
         result = await db.fetch_all(query)
         return {"result": result}
+
+    @classmethod
+    async def check_redundant_file(cls, owner: str, md5: str):
+        query = photos.select().where(photos.c.owner == owner).where(
+            photos.c.md5 == md5).limit(1)
+        return await db.fetch_one(query)
 
     @classmethod
     async def insert(cls, **data):
