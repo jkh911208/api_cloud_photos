@@ -112,17 +112,17 @@ class Photo(object):
         local_time = datetime.now()
         if "DateTime" in exif:
             local_time = datetime.strptime(
-                    exif["DateTime"], "%Y:%m:%d %H:%M:%S")
+                exif["DateTime"], "%Y:%m:%d %H:%M:%S")
 
         # calculate gps coordinate
         latitude, longitude = None, None
         if "GPSInfo" in exif:
             if 1 in exif["GPSInfo"] and 2 in exif["GPSInfo"] and 3 in exif["GPSInfo"] and 4 in exif["GPSInfo"]:
                 latitude = float((exif["GPSInfo"][2][0] + exif["GPSInfo"][2][1] /
-                                            60 + exif["GPSInfo"][2][2] / 3600) * 1 if exif["GPSInfo"][1] == "N" else -1)
+                                  60 + exif["GPSInfo"][2][2] / 3600) * 1 if exif["GPSInfo"][1] == "N" else -1)
                 longitude = float((exif["GPSInfo"][4][0] + exif["GPSInfo"][4][1] /
-                                         60 + exif["GPSInfo"][4][2] / 3600) * (1 if exif["GPSInfo"][3] == "E" else -1))
-        
+                                   60 + exif["GPSInfo"][4][2] / 3600) * (1 if exif["GPSInfo"][3] == "E" else -1))
+
         # calculate utc time based on gps info
         if latitude is not None:
             tf = TimezoneFinder()
@@ -134,7 +134,7 @@ class Photo(object):
             utc_dt = local_dt.astimezone(pytz.utc)
             local_time = datetime.strptime(
                 utc_dt.strftime("%Y:%m:%d %H:%M:%S"), "%Y:%m:%d %H:%M:%S")
-        
+
         return latitude, longitude, local_time
 
     @staticmethod
@@ -159,6 +159,5 @@ class Photo(object):
             return exif
         return None
 
-        
     async def __process_video(self, file, owner_id):
         pass
