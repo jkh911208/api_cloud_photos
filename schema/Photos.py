@@ -46,7 +46,10 @@ class Photos:
     async def check_redundant_file(cls, owner: str, md5: str):
         query = photos.select().where(photos.c.owner == owner).where(
             photos.c.md5 == md5).limit(1)
-        return await db.fetch_one(query)
+        result = await db.fetch_one(query)
+        if result:
+            return dict(result)
+        return None
 
     @classmethod
     async def insert(cls, **data):

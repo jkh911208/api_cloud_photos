@@ -59,8 +59,9 @@ class Photo(object):
 
         # check if your have same file
         md5 = hashlib.md5(file_bytes).hexdigest()
-        if await self.__check_redundant(owner_id, md5):
-            raise ValueError("Same file exist")
+        redundant = await self.__check_redundant(owner_id, md5)
+        if redundant:
+            return redundant
 
         # build db payload
         payload = {
