@@ -2,6 +2,7 @@ import hashlib
 import io
 import os
 from datetime import datetime
+from time import time
 from uuid import uuid4
 
 import config
@@ -16,8 +17,11 @@ class Photo(object):
     def __init__(self):
         pass
 
-    async def get_photo_list(self, skip, owner_id):
-        return await Photos.get_by_owner(owner_id, skip, 100)
+    async def get_photo_list(self, created, owner_id):
+        result = await Photos.get_by_owner(owner_id, created, 20)
+        if len(result["result"]) == 20:
+            result["has_next"] = True
+        return result
 
     async def get_image(self, filename, owner_id):
         format = filename.split(".")[-1]
@@ -55,7 +59,8 @@ class Photo(object):
         width, height = await self.__get_img_size(img, exif)
 
         # parse gps info from exif
-        latitude, longitude, original_datetime = await self.__parse_exif_gps_info(exif)
+        latitude, longitude, epoch = await self.__parse_exif_gps_info(exif)
+        print(epoch)
 
         # check if your have same file
         md5 = hashlib.md5(file_bytes).hexdigest()
@@ -66,8 +71,9 @@ class Photo(object):
         # build db payload
         payload = {
             "id": id,
+            "created": int(time()*1000),
             "original_filename": file.filename,
-            "original_datetime": original_datetime,
+            "original_datetime": epoch,
             "original_make": exif["Make"] if "Make" in exif else None,
             "original_model": exif["Model"] if "Model" in exif else None,
             "original_width": width,
@@ -135,8 +141,7 @@ class Photo(object):
             utc_dt = local_dt.astimezone(pytz.utc)
             local_time = datetime.strptime(
                 utc_dt.strftime("%Y:%m:%d %H:%M:%S"), "%Y:%m:%d %H:%M:%S")
-
-        return latitude, longitude, local_time
+        return latitude, longitude, int((local_time-datetime(1970,1,1)).total_seconds() * 1000)
 
     @staticmethod
     async def __get_img_size(img, exif):

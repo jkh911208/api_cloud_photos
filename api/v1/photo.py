@@ -20,7 +20,7 @@ async def get_image(filename: str, token: str = Depends(oauth2_scheme)):
     token = jwt.decode(token, config.SECRET)
     return await photo_controller.get_image(filename, token["id"])
 
-@photo_router.get("/list/{skip}", tags=["Photo"], summary="get list of photos", status_code=200)
-async def get_photo_list(skip: int = 0, token: str = Depends(oauth2_scheme)):
+@photo_router.get("/list/{created}", tags=["Photo"], summary="get list of photos", status_code=200)
+async def get_photo_list(created: int = 0, token: str = Depends(oauth2_scheme)):
     token = jwt.decode(token, config.SECRET)
-    return await photo_controller.get_photo_list(skip, token["id"])
+    return await photo_controller.get_photo_list(created, token["id"])
