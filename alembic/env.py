@@ -39,7 +39,7 @@ def get_url():
     POSTGRES_ADDRESS = os.getenv("POSTGRES_ADDRESS")
 
 
-    return f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_ADDRESS}:5432"
+    return f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_ADDRESS}:5432/{POSTGRES_DB}"
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.
