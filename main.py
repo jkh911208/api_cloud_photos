@@ -1,3 +1,6 @@
+import hashlib
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
@@ -34,11 +37,16 @@ app.include_router(photo_router, prefix="/api/v1/photo")
 if config.PRODUCTION == True:
     @app.middleware("http")
     async def add_process_time_header(request: Request, call_next):
-        try:
-            if request.headers["X-Custom-Auth"] != "cloudphotos":
+        if "Authorization" not in request.headers:
+            try:
+                session_id = request.headers["sessionId"]
+                hash_result = hashlib.sha256(session_id+"cloudphoto")
+                if hash_result != request.headers["X-Custom-Auth"]:
+                    return JSONResponse({"error": "Not Authorized"}, 401)
+            except Exception as err:
+                logging.excpetion(err)
                 return JSONResponse({"error": "Not Authorized"}, 401)
-        except Exception as err:
-            return JSONResponse({"error": "Not Authorized"}, 401)
+
         response = await call_next(request)
         return response
 
