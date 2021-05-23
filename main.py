@@ -34,7 +34,10 @@ app.include_router(photo_router, prefix="/api/v1/photo")
 if config.PRODUCTION == True:
     @app.middleware("http")
     async def add_process_time_header(request: Request, call_next):
-        if request.headers["X-Custom-Auth"] != "cloudphotos":
+        try:
+            if request.headers["X-Custom-Auth"] != "cloudphotos":
+                return JSONResponse({"error": "Not Authorized"}, 401)
+        except Exception as err:
             return JSONResponse({"error": "Not Authorized"}, 401)
         response = await call_next(request)
         return response
