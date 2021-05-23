@@ -40,11 +40,15 @@ if config.PRODUCTION == True:
         if "Authorization" not in request.headers:
             try:
                 session_id = request.headers["sessionId"]
-                hash_result = hashlib.sha256(session_id+"cloudphoto")
+                before_result = session_id+"cloudpho"
+                print(before_result)
+                hash_alg = hashlib.sha256()
+                hash_alg.update(before_result.encode())
+                hash_result = hash_alg.hexdigest()
                 if hash_result != request.headers["X-Custom-Auth"]:
                     return JSONResponse({"error": "Not Authorized"}, 401)
             except Exception as err:
-                logging.excpetion(err)
+                logging.exception(err)
                 return JSONResponse({"error": "Not Authorized"}, 401)
 
         response = await call_next(request)
