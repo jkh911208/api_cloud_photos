@@ -38,7 +38,7 @@ class Photos:
 
     @classmethod
     async def get_by_owner(cls, owner: str, created: int = 0, limit: int = 20):
-        query = photos.select().with_only_columns([photos.c.id, photos.c.created, photos.c.thumbnail, photos.c.resize, photos.c.original_width, photos.c.original_height, photos.c.original_datetime]).where(
+        query = photos.select().with_only_columns([photos.c.id, photos.c.created, photos.c.thumbnail, photos.c.resize, photos.c.original_width, photos.c.original_height, photos.c.original_datetime, photos.c.md5]).where(
             photos.c.owner == owner).where(photos.c.created > created).limit(limit).order_by(photos.c.created.desc())
         result = await db.fetch_all(query)
         return {"result": result}
