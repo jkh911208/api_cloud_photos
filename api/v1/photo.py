@@ -2,7 +2,7 @@ import logging
 
 import config
 from controller.Photo import Photo
-from fastapi import APIRouter, Depends, File, Response, UploadFile
+from fastapi import APIRouter, Depends, File, Request, Response, UploadFile
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 
@@ -12,10 +12,18 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/user/login")
 
 
 @photo_router.post("/", tags=["Photo"], summary="upload single photo", status_code=201)
-async def upload_media(response: Response, file: UploadFile = File(...), token: str = Depends(oauth2_scheme)):
+async def upload_media(response: Response, request: Request, file: UploadFile = File(...), token: str = Depends(oauth2_scheme)):
     try:
         token = jwt.decode(token, config.SECRET)
-        return await photo_controller.upload_media(file, token["id"])
+        form = await request.form()
+        data = {
+            "creation_time": int(form["creationTime"]),
+            "md5": form["md5"],
+            "size": int(form["size"]),
+            "height": int(form["height"]),
+            "width": int(form["width"])
+        }
+        return await photo_controller.upload_media(file, token["id"], data)
     except Exception as err:
         logging.exception(err)
         response.status_code = 500

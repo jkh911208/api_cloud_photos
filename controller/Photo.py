@@ -29,16 +29,16 @@ class Photo(object):
         img = open(file_path, mode="rb")
         return StreamingResponse(img, media_type=f"image/{format}")
 
-    async def upload_media(self, file, owner_id):
+    async def upload_media(self, file, owner_id, data):
         content_type = file.content_type
         if content_type.startswith("image/"):
-            return await self.__process_image(file, owner_id)
+            return await self.__process_image(file, owner_id, data)
         elif content_type.startswith("video/"):
-            return await self.__process_video(file, owner_id)
+            return await self.__process_video(file, owner_id, data)
         else:
             raise ValueError(f"Not supported type : {content_type}")
 
-    async def __process_image(self, file, owner_id):
+    async def __process_image(self, file, owner_id, data):
         supported_format = {"jpeg", "jpg"}
         file_format = file.content_type.split("/")[1]
         if file_format.lower() not in supported_format:
@@ -52,19 +52,8 @@ class Photo(object):
         img = Image.open(io.BytesIO(file_bytes))
         await file.close()
 
-        # get exif data
-        exif = await self.__parse_exif(img)
-
-        # get image size
-        width, height = await self.__get_img_size(img, exif)
-
-        # parse gps info from exif
-        latitude, longitude, epoch = await self.__parse_exif_gps_info(exif)
-        print(epoch)
-
         # check if your have same file
-        md5 = hashlib.md5(file_bytes).hexdigest()
-        redundant = await self.__check_redundant(owner_id, md5)
+        redundant = await self.__check_redundant(owner_id, data["md5"])
         if redundant:
             return redundant
 
@@ -73,19 +62,20 @@ class Photo(object):
             "id": id,
             "created": int(time()*1000),
             "original_filename": file.filename,
-            "original_datetime": epoch,
-            "original_make": exif["Make"] if "Make" in exif else None,
-            "original_model": exif["Model"] if "Model" in exif else None,
-            "original_width": width,
-            "original_height": height,
+            "original_datetime": data["creation_time"],
+            "original_make": None,
+            "original_model": None,
+            "original_width": data["width"],
+            "original_height": data["height"],
             "new_filename": f"{id}.{file_format}",
             "thumbnail": f"{id}-thumbnail.{file_format}",
             "resize": f"{id}-resize.{file_format}",
             "owner": owner_id,
             "status": 1,
-            "latitude": latitude,
-            "longitude": longitude,
-            "md5": md5
+            "latitude": None,
+            "longitude": None,
+            "md5": data["md5"],
+            "original_filesize": data["size"]
         }
 
         # write payload to DB
@@ -141,7 +131,7 @@ class Photo(object):
             utc_dt = local_dt.astimezone(pytz.utc)
             local_time = datetime.strptime(
                 utc_dt.strftime("%Y:%m:%d %H:%M:%S"), "%Y:%m:%d %H:%M:%S")
-        return latitude, longitude, int((local_time-datetime(1970,1,1)).total_seconds() * 1000)
+        return latitude, longitude, int((local_time-datetime(1970, 1, 1)).total_seconds() * 1000)
 
     @staticmethod
     async def __get_img_size(img, exif):
