@@ -24,6 +24,8 @@ class User():
     async def login(self, data: dict) -> dict:
         logging.info("start login")
         user = await Users.get_by_username(data["username"])
+        if user is None:
+            raise ValueError("Cannot verify username and password")
         hash = hashlib.sha3_512()
         hash.update(data["password"].encode())
         login_log = {
