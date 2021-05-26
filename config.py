@@ -1,5 +1,5 @@
 import os
 
-PRODUCTION = bool(os.getenv("PRODUCTION", default=False))
+PRODUCTION = os.getenv("PRODUCTION").lower() in {'true', '1'}
 SECRET = os.getenv("SECRET", default="secret")
 STORE_PATH = os.getenv("STORE_PATH", default=".")
