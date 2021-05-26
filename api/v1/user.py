@@ -44,6 +44,9 @@ async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depen
         }
         result = await user_controller.login(user_data)
         return result
+    except ValueError as err:
+        response.status_code = 401
+        return {"error": str(err)}
     except Exception as err:
         logging.exception(err)
         response.status_code = 500
