@@ -1,4 +1,3 @@
-import hashlib
 import io
 import os
 from datetime import datetime
@@ -9,6 +8,7 @@ import config
 import pytz
 from fastapi.responses import StreamingResponse
 from PIL import ExifTags, Image
+from pyheif_pillow_opener import register_heif_opener
 from schema.Photos import Photos
 from timezonefinder import TimezoneFinder
 
@@ -39,7 +39,8 @@ class Photo(object):
             raise ValueError(f"Not supported type : {content_type}")
 
     async def __process_image(self, file, owner_id, data):
-        supported_format = {"jpeg", "jpg"}
+        register_heif_opener()
+        supported_format = {"jpeg", "jpg", "heic"}
         file_format = file.content_type.split("/")[1]
         if file_format.lower() not in supported_format:
             raise ValueError(f"Image format of {file_format} is not supported")
@@ -68,8 +69,8 @@ class Photo(object):
             "original_width": data["width"],
             "original_height": data["height"],
             "new_filename": f"{id}.{file_format}",
-            "thumbnail": f"{id}-thumbnail.{file_format}",
-            "resize": f"{id}-resize.{file_format}",
+            "thumbnail": f"{id}-thumbnail.jpeg",
+            "resize": f"{id}-resize.jpeg",
             "owner": owner_id,
             "status": 1,
             "latitude": None,
@@ -91,12 +92,12 @@ class Photo(object):
             f.close()
         # save resized file
         img.thumbnail((2560, 2560), Image.LANCZOS)
-        img.save(f"{complete_path}{id}-resize.{file_format}",
-                 file_format, exif=img.info['exif'])
+        img.save(f"{complete_path}{id}-resize.jpeg",
+                 "jpeg", exif=img.info['exif'])
         # save thumbnail
         img.thumbnail((512, 512), Image.LANCZOS)
-        img.save(f"{complete_path}{id}-thumbnail.{file_format}",
-                 file_format, exif=img.info['exif'])
+        img.save(f"{complete_path}{id}-thumbnail.jpeg",
+                 "jpeg", exif=img.info['exif'])
 
         return payload
 

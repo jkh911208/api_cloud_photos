@@ -10,3 +10,4 @@ python-multipart==0.0.5
 Pillow==8.2.0
 timezonefinder==5.2.0
 pytz==2021.1
+pyheif-pillow-opener==0.1.0

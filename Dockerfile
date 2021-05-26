@@ -1,9 +1,11 @@
 # Pull base image
-FROM python:3.9
+FROM python:3.8
 
 COPY requirements.txt /tmp/requirements.txt
 
 RUN pip install -r /tmp/requirements.txt
+
+RUN pip install --upgrade pip setuptools
 
 COPY . /app
 
