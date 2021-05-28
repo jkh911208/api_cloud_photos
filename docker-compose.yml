@@ -11,7 +11,7 @@ services:
       - POSTGRES_DB=postgres
   api:
     build: .
-    command: bash -c "python /app/main.py"
+    command: bash -c "alembic upgrade head && python /app/main.py"
     volumes:
       - .:/app
     ports:

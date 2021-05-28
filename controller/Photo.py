@@ -45,6 +45,12 @@ class Photo(object):
         if file_format.lower() not in supported_format:
             raise ValueError(f"Image format of {file_format} is not supported")
 
+        # check if your have same file
+        redundant = await self.__check_redundant(owner_id, data["md5"])
+        if redundant:
+            await file.close()
+            return redundant
+
         # generate uuid4 id
         id = str(uuid4())
 
@@ -52,11 +58,6 @@ class Photo(object):
         file_bytes = await file.read()
         img = Image.open(io.BytesIO(file_bytes))
         await file.close()
-
-        # check if your have same file
-        redundant = await self.__check_redundant(owner_id, data["md5"])
-        if redundant:
-            return redundant
 
         # build db payload
         payload = {
@@ -69,8 +70,8 @@ class Photo(object):
             "original_width": data["width"],
             "original_height": data["height"],
             "new_filename": f"{id}.{file_format}",
-            "thumbnail": f"{id}-thumbnail.jpeg",
-            "resize": f"{id}-resize.jpeg",
+            "thumbnail": f"{id}-thumbnail.{file_format}",
+            "resize": f"{id}-resize.{file_format}",
             "owner": owner_id,
             "status": 1,
             "latitude": None,
@@ -79,25 +80,39 @@ class Photo(object):
             "original_filesize": data["size"]
         }
 
+        if file_format.lower() == "heic":
+            payload["thumbnail"] = f"{id}-thumbnail.jpeg"
+            payload["resize"] = f"{id}-resize.jpeg"
+
         # write payload to DB
         await Photos.insert(**payload)
 
-        # save file to disk
+        # check if store path exist
         complete_path = f"{config.STORE_PATH}/{owner_id}/"
         if not os.path.exists(complete_path):
             os.makedirs(complete_path)
+
         # save original file
         with open(f"{complete_path}{id}.{file_format}", 'wb+') as f:
             f.write(file_bytes)
             f.close()
-        # save resized file
-        img.thumbnail((2560, 2560), Image.LANCZOS)
-        img.save(f"{complete_path}{id}-resize.jpeg",
-                 "jpeg", exif=img.info['exif'])
-        # save thumbnail
-        img.thumbnail((512, 512), Image.LANCZOS)
-        img.save(f"{complete_path}{id}-thumbnail.jpeg",
-                 "jpeg", exif=img.info['exif'])
+
+        if file_format.lower() == "heic":
+            # save resized file
+            img.thumbnail((2560, 2560), Image.LANCZOS)
+            img.save(f"{complete_path}{id}-resize.jpeg", "jpeg")
+            # save thumbnail
+            img.thumbnail((512, 512), Image.LANCZOS)
+            img.save(f"{complete_path}{id}-thumbnail.jpeg", "jpeg")
+        else:
+            # save resized file
+            img.thumbnail((2560, 2560), Image.LANCZOS)
+            img.save(f"{complete_path}{id}-resize.{file_format}",
+                     file_format, exif=img.info['exif'])
+            # save thumbnail
+            img.thumbnail((512, 512), Image.LANCZOS)
+            img.save(f"{complete_path}{id}-thumbnail.{file_format}",
+                     file_format, exif=img.info['exif'])
 
         return payload
 
