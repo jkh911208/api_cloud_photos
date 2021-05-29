@@ -1,8 +1,9 @@
-import hashlib
 import logging
+from time import time
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from jose import jwt
 
 import config
 from api.v1.photo import photo_router
@@ -37,22 +38,17 @@ app.include_router(photo_router, prefix="/api/v1/photo")
 if config.PRODUCTION == True:
     @app.middleware("http")
     async def add_process_time_header(request: Request, call_next):
-        if "Authorization" not in request.headers:
-            try:
-                session_id = request.headers["sessionId"]
-                before_result = session_id+"cloudpho"
-                print(before_result)
-                hash_alg = hashlib.sha256()
-                hash_alg.update(before_result.encode())
-                hash_result = hash_alg.hexdigest()
-                if hash_result != request.headers["X-Custom-Auth"]:
-                    return JSONResponse({"error": "Not Authorized"}, 401)
-            except Exception as err:
-                logging.exception(err)
-                return JSONResponse({"error": "Not Authorized"}, 401)
+        try:
+            requested_time = jwt.decode(
+                request.headers["X-Custom-Auth"], config.APP_SECRET)["timestamp"] // 1000
+            if int(time()) > requested_time + 15:
+                print("time took too long")
+                raise ValueError("request made older than 15 seconds")
+        except Exception as err:
+            logging.exception(err)
+            return JSONResponse({"error": "Not Authorized"}, 401)
 
-        response = await call_next(request)
-        return response
+        return await call_next(request)
 
 if __name__ == "__main__":
     import uvicorn

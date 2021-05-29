@@ -25,3 +25,4 @@ services:
       - POSTGRES_ADDRESS=db
       - SECRET=verysecure
       - PRODUCTION=0
+      - APP_SECRET=verysecure
