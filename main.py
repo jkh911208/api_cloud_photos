@@ -39,11 +39,12 @@ if config.PRODUCTION == True:
     @app.middleware("http")
     async def add_process_time_header(request: Request, call_next):
         try:
-            requested_time = jwt.decode(
-                request.headers["X-Custom-Auth"], config.APP_SECRET)["timestamp"] // 1000
-            if int(time()) > requested_time + 15:
-                print("time took too long")
-                raise ValueError("request made older than 15 seconds")
+            jwt.decode(request.headers["X-Custom-Auth"], config.APP_SECRET)
+            # requested_time = jwt.decode(
+            #     request.headers["X-Custom-Auth"], config.APP_SECRET)["timestamp"] // 1000
+            # if int(time()) > requested_time + 15:
+            #     print("time took too long")
+            #     raise ValueError("request made older than 15 seconds")
         except Exception as err:
             logging.exception(err)
             return JSONResponse({"error": "Not Authorized"}, 401)
