@@ -25,6 +25,7 @@ photos = sqlalchemy.Table(
     sqlalchemy.Column("owner", sqlalchemy.String(36),
                       index=True, nullable=False),
     sqlalchemy.Column("status", sqlalchemy.SmallInteger, nullable=False),
+    sqlalchemy.Column("duration", sqlalchemy.Float, nullable=False, server_default="0.0"),
     sqlalchemy.UniqueConstraint("owner", "md5"),
     sqlalchemy.ForeignKeyConstraint(["owner"], ["users.id"])
 )

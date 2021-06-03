@@ -20,6 +20,7 @@ async def upload_media(
         creationTime: str = Form(...),
         height: str = Form(...),
         width: str = Form(...),
+        duration: str = Form(...),
         file: UploadFile = File(...),
         token: str = Depends(oauth2_scheme)):
     try:
@@ -29,7 +30,8 @@ async def upload_media(
             "md5": md5,
             "size": int(size),
             "height": int(height),
-            "width": int(width)
+            "width": int(width),
+            "duration": float(duration)
         }
         return await photo_controller.upload_media(file, token["id"], data)
     except Exception as err:

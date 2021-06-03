@@ -77,7 +77,8 @@ class Photo(object):
             "latitude": None,
             "longitude": None,
             "md5": data["md5"],
-            "original_filesize": data["size"]
+            "original_filesize": data["size"],
+            "duration": data["duration"]
         }
 
         if file_format.lower() == "heic":
@@ -150,17 +151,6 @@ class Photo(object):
         return latitude, longitude, int((local_time-datetime(1970, 1, 1)).total_seconds() * 1000)
 
     @staticmethod
-    async def __get_img_size(img, exif):
-        width, height = img.size
-        if exif is None:
-            width, height
-        else:
-            if "Orientation" in exif:
-                if exif["Orientation"] > 4:
-                    return height, width
-            return width, height
-
-    @staticmethod
     async def __parse_exif(img):
         img_exif = img._getexif()
         exif = {}
@@ -171,5 +161,5 @@ class Photo(object):
             return exif
         return None
 
-    async def __process_video(self, file, owner_id):
+    async def __process_video(self, file, owner_id, data):
         pass
