@@ -20,7 +20,7 @@ async def upload_media(
         creationTime: str = Form(...),
         height: str = Form(...),
         width: str = Form(...),
-        duration: str = Form(...),
+        duration: str = Form(0),
         file: UploadFile = File(...),
         token: str = Depends(oauth2_scheme)):
     try:
