@@ -1,5 +1,6 @@
 import logging
 from time import time
+from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.logger import logger
@@ -10,6 +11,7 @@ import config
 from api.v1.photo import photo_router
 from api.v1.user import user_router
 from db import db
+from schema.RequestLog import RequestLog
 
 app = None
 if config.PRODUCTION == True:
@@ -40,13 +42,17 @@ if config.PRODUCTION == True:
     @app.middleware("http")
     async def add_process_time_header(request: Request, call_next):
         try:
-            jwt.decode(request.headers["X-Custom-Auth"], config.APP_SECRET)
-            logging.info(request.headers)
-            # requested_time = jwt.decode(
-            #     request.headers["X-Custom-Auth"], config.APP_SECRET)["timestamp"] // 1000
-            # if int(time()) > requested_time + 15:
-            #     print("time took too long")
-            #     raise ValueError("request made older than 15 seconds")
+            requested_time = jwt.decode(
+                request.headers["X-Custom-Auth"], config.APP_SECRET)["timestamp"]
+            arrival_time = int(time() * 1000)
+            data = {
+                "id": str(uuid4()),
+                "headers": dict(request.headers),
+                "requested_time": requested_time,
+                "arrival_time": arrival_time,
+                "time_difference": arrival_time - requested_time
+            }
+            await RequestLog.insert(**data)
         except Exception as err:
             logging.exception(err)
             return JSONResponse({"error": "Not Authorized"}, 401)
