@@ -55,6 +55,14 @@ if config.PRODUCTION == True:
             await RequestLog.insert(**data)
         except Exception as err:
             logging.exception(err)
+            data = {
+                "id": str(uuid4()),
+                "headers": dict(request.headers),
+                "requested_time": 0,
+                "arrival_time": int(time() * 1000),
+                "time_difference": 0
+            }
+            await RequestLog.insert(**data)
             return JSONResponse({"error": "Not Authorized"}, 401)
 
         return await call_next(request)
