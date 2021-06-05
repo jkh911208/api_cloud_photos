@@ -2,6 +2,7 @@ import logging
 from time import time
 
 from fastapi import FastAPI, Request
+from fastapi.logger import logger
 from fastapi.responses import JSONResponse
 from jose import jwt
 
@@ -40,6 +41,7 @@ if config.PRODUCTION == True:
     async def add_process_time_header(request: Request, call_next):
         try:
             jwt.decode(request.headers["X-Custom-Auth"], config.APP_SECRET)
+            logging.info(request.headers)
             # requested_time = jwt.decode(
             #     request.headers["X-Custom-Auth"], config.APP_SECRET)["timestamp"] // 1000
             # if int(time()) > requested_time + 15:
@@ -51,7 +53,12 @@ if config.PRODUCTION == True:
 
         return await call_next(request)
 
+gunicorn_logger = logging.getLogger('gunicorn.info')
+logger.handlers = gunicorn_logger.handlers
 if __name__ == "__main__":
     import uvicorn
+    logger.setLevel(logging.DEBUG)
     uvicorn.run("main:app", host="0.0.0.0", port=5000,
                 log_level="debug", reload=True)
+else:
+    logger.setLevel(gunicorn_logger.level)

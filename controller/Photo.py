@@ -1,4 +1,5 @@
 import io
+import logging
 import os
 from datetime import datetime
 from time import time
@@ -39,6 +40,7 @@ class Photo(object):
             raise ValueError(f"Not supported type : {content_type}")
 
     async def __process_image(self, file, owner_id, data):
+        logging.info(f"owner id : {owner_id}")
         register_heif_opener()
         supported_format = {"jpeg", "jpg", "heic"}
         file_format = file.content_type.split("/")[1]
@@ -106,14 +108,15 @@ class Photo(object):
             img.thumbnail((512, 512), Image.LANCZOS)
             img.save(f"{complete_path}{id}-thumbnail.jpeg", "jpeg")
         else:
+            exif_info = img.info['exif'] if "exif" in img.info else b''
             # save resized file
             img.thumbnail((2560, 2560), Image.LANCZOS)
             img.save(f"{complete_path}{id}-resize.{file_format}",
-                     file_format, exif=img.info['exif'])
+                     file_format, exif=exif_info)
             # save thumbnail
             img.thumbnail((512, 512), Image.LANCZOS)
             img.save(f"{complete_path}{id}-thumbnail.{file_format}",
-                     file_format, exif=img.info['exif'])
+                     file_format, exif=exif_info)
 
         return payload
 
