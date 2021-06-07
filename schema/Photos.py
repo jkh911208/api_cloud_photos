@@ -15,7 +15,8 @@ photos = sqlalchemy.Table(
     sqlalchemy.Column("original_model", sqlalchemy.String, nullable=True),
     sqlalchemy.Column("original_width", sqlalchemy.Integer, nullable=False),
     sqlalchemy.Column("original_height", sqlalchemy.Integer, nullable=False),
-    sqlalchemy.Column("original_filesize", sqlalchemy.BigInteger, nullable=False),
+    sqlalchemy.Column("original_filesize",
+                      sqlalchemy.BigInteger, nullable=False),
     sqlalchemy.Column("new_filename", sqlalchemy.String, nullable=False),
     sqlalchemy.Column("thumbnail", sqlalchemy.String, nullable=False),
     sqlalchemy.Column("resize", sqlalchemy.String, nullable=False),
@@ -25,7 +26,8 @@ photos = sqlalchemy.Table(
     sqlalchemy.Column("owner", sqlalchemy.String(36),
                       index=True, nullable=False),
     sqlalchemy.Column("status", sqlalchemy.SmallInteger, nullable=False),
-    sqlalchemy.Column("duration", sqlalchemy.Float, nullable=False, server_default="0.0"),
+    sqlalchemy.Column("duration", sqlalchemy.Float,
+                      nullable=False, server_default="0.0"),
     sqlalchemy.UniqueConstraint("owner", "md5"),
     sqlalchemy.ForeignKeyConstraint(["owner"], ["users.id"])
 )
@@ -40,7 +42,7 @@ class Photos:
 
     @classmethod
     async def get_by_owner(cls, owner: str, created: int = 0, limit: int = 20):
-        query = photos.select().with_only_columns([photos.c.id, photos.c.created, photos.c.thumbnail, photos.c.resize, photos.c.original_width, photos.c.original_height, photos.c.original_datetime, photos.c.md5]).where(
+        query = photos.select().with_only_columns([photos.c.id, photos.c.created, photos.c.thumbnail, photos.c.resize, photos.c.original_width, photos.c.original_height, photos.c.original_datetime, photos.c.md5, photos.c.duration]).where(
             photos.c.owner == owner).where(photos.c.created > created).limit(limit).order_by(photos.c.created)
         result = await db.fetch_all(query)
         return {"result": result}
