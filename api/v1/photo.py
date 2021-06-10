@@ -60,3 +60,13 @@ async def get_photo_list(response: Response, created: int = 0, token: str = Depe
         logging.exception(err)
         response.status_code = 500
         return {"result": "INTERNAL ERROR"}
+
+@photo_router.delete("/{id}", tags=["Photo"], summary="delete single image using id", status_code=200)
+async def get_photo_list(response: Response, id: str, token: str = Depends(oauth2_scheme)):
+    try:
+        token = jwt.decode(token, config.SECRET)
+        return await photo_controller.delete_image_by_id(id, token["id"])
+    except Exception as err:
+        logging.exception(err)
+        response.status_code = 500
+        return {"result": "INTERNAL ERROR"}

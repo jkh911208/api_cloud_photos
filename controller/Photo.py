@@ -1,3 +1,4 @@
+import glob
 import io
 import logging
 import os
@@ -17,6 +18,24 @@ from timezonefinder import TimezoneFinder
 class Photo(object):
     def __init__(self):
         pass
+
+    async def delete_image_by_id(self, id, owner_id):
+        logging.info(f"delete id {id} by {owner_id}")
+        # delete from DB
+        try:
+            db_result = await Photos.delete(id)
+            logging.info(db_result)
+        except Exception:
+            pass
+        # delete from file system
+        file_list = glob.glob(f"{config.STORE_PATH}/{owner_id}/{id}*")
+        logging.info(file_list)
+
+        for file_path in file_list:
+            try:
+                os.remove(file_path)
+            except Exception:
+                pass
 
     async def get_photo_list(self, created, owner_id):
         result = await Photos.get_by_owner(owner_id, created, 20)

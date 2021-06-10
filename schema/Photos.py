@@ -60,3 +60,8 @@ class Photos:
     async def insert(cls, **data):
         query = photos.insert().values(**data)
         return await db.execute(query)
+
+    @classmethod
+    async def delete(cls, id: str):
+        query = photos.delete().where(photos.c.id == id)
+        return await db.execute(query)
