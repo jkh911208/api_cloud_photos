@@ -18,12 +18,7 @@ class SignUp(BaseModel):
         orm_mode = True
 
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str
-
-
-@user_router.post("/signup", tags=["User"], summary="signup", response_model=Token, status_code=201)
+@user_router.post("/signup", tags=["User"], summary="signup", status_code=201)
 async def signup(data: SignUp, response: Response):
     try:
         data = data.dict()
@@ -35,7 +30,7 @@ async def signup(data: SignUp, response: Response):
         return {"result": "INTERNAL ERROR"}
 
 
-@user_router.post("/login", tags=["User"], summary="Login user", response_model=Token, status_code=200)
+@user_router.post("/login", tags=["User"], summary="Login user", status_code=200)
 async def login(response: Response, form_data: OAuth2PasswordRequestForm = Depends()):
     try:
         user_data = {
