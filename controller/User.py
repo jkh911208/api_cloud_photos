@@ -19,7 +19,7 @@ class User():
         logging.info("write to db")
         await Users.insert(**data)
         logging.info("return access token")
-        return {"access_token": jwt.encode({"id": data["id"]}, config.SECRET), "token_type": "bearer"}
+        return {"access_token": jwt.encode({"id": data["id"], "username": data["username"]}, config.SECRET), "token_type": "bearer"}
 
     async def login(self, data: dict) -> dict:
         logging.info("start login")
@@ -36,7 +36,7 @@ class User():
             logging.info("password match")
             login_log["status"] = 1
             await LoginLog.insert(**login_log)
-            return {"access_token": jwt.encode({"id": user["id"]}, config.SECRET), "token_type": "bearer"}
+            return {"access_token": jwt.encode({"id": user["id"], "username": data["username"]}, config.SECRET), "token_type": "bearer"}
         login_log["status"] = 0
         await LoginLog.insert(**login_log)
         raise ValueError("Cannot verify username and password")
