@@ -41,19 +41,23 @@ class Photos:
         return dict(photo)
 
     @classmethod
-    async def get_by_owner(cls, owner: str, created: int = 0, limit: int = 20):
+    async def get_by_owner(cls, owner: str, created: int = 0):
         query = photos.select().with_only_columns([photos.c.id, photos.c.created, photos.c.thumbnail, photos.c.resize, photos.c.original_width, photos.c.original_height, photos.c.original_datetime, photos.c.md5, photos.c.duration]).where(
-            photos.c.owner == owner).where(photos.c.created > created).limit(limit).order_by(photos.c.created)
+            photos.c.owner == owner).where(photos.c.created > created).order_by(photos.c.created)
         result = await db.fetch_all(query)
         return {"result": result}
 
     @classmethod
     async def check_redundant_file(cls, owner: str, md5: str):
+        # check use md5
         query = photos.select().where(photos.c.owner == owner).where(
             photos.c.md5 == md5)
         result = await db.fetch_one(query)
         if result:
             return dict(result)
+
+        # check use file size and datetime and filename
+        
         return None
 
     @classmethod

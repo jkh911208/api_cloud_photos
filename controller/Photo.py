@@ -38,9 +38,8 @@ class Photo(object):
                 pass
 
     async def get_photo_list(self, created, owner_id):
-        result = await Photos.get_by_owner(owner_id, created, 20)
-        if len(result["result"]) == 20:
-            result["has_next"] = True
+        result = await Photos.get_by_owner(owner_id, created)
+        result["has_next"] = False
         return result
 
     async def get_image(self, filename, owner_id):
