@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from jose import jwt
 
 import config
+from api.v1.feedback import feedback_router
 from api.v1.photo import photo_router
 from api.v1.user import user_router
 from db import db
@@ -33,6 +34,7 @@ async def startup():
 async def shutdown():
     await db.disconnect()
 
+app.include_router(feedback_router, prefix="/api/v1/feedback")
 app.include_router(user_router, prefix="/api/v1/user")
 app.include_router(photo_router, prefix="/api/v1/photo")
 
